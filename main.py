@@ -80,7 +80,7 @@ def download_lora(lora_url):
     lora_filename = os.path.basename(lora_url)
     lora_path = os.path.join(LORA_DIR, lora_filename)
     os.system(f'wget -O {lora_path} "{lora_url}"')
-    # 这里可以添加加载LoRA的逻辑
+    pipe.load_lora_weights(lora_path) # 这里可以添加加载LoRA的逻辑
     return "LoRA downloaded successfully."
 
 
