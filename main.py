@@ -19,12 +19,11 @@ os.makedirs(SAVE_DIR, exist_ok=True)
 os.makedirs(LORA_DIR, exist_ok=True)
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-# Load model
 # 初始模型下载
 os.system(f'wget -O {MODEL_PATH} "https://civitai.com/api/download/models/128078?type=Model&format=SafeTensor&size=pruned&fp=fp16"')
 
 pipe = StableDiffusionXLPipeline.from_single_file(MODEL_PATH, use_safetensors=True, torch_dtype=torch.float16).to(device)
-pipe.load_lora_weights（LORA_DIR）
+pipe.load_lora_weights(LORA_DIR)
 pipe.safety_checker = None
 pipe.scheduler = EulerDiscreteScheduler.from_config(pipe.scheduler.config)
 print("\033[1;32mDone!\033[0m")
@@ -120,10 +119,7 @@ with gr.Group():
 with gr.Row():
 prompt = gr.Text(label="Prompt", show_label=False, lines=1, max_lines=7,
 placeholder="Enter your prompt", container=False, scale=4)
-run_button = gr.Button("🚀 Run", scale=1, variant='primary')
-        
-        result = gr.Image(label="Result", show_label=False)
-        
+run_button = gr.Button("🚀 Run", scale=1, variant='primary')      
 
         result = gr.Gallery(label="Result", show_label=False)
 
@@ -153,13 +149,18 @@ num_inference_steps = gr.Slider(label="Steps", minimum=1, maximum=50, step=1, va
                 lora_url = gr.Textbox(label="LoRA download URL", placeholder="Enter LoRA download URL")
                 download_lora_button = gr.Button("Download LoRA")
 
+                sampler_choice = gr.Dropdown(
+                    choices=list(samplers.keys()),
+                    label="Sampler",
+                    value="Euler Discrete"
+                )
+
 gr.Examples(examples=examples, inputs=[prompt])
     
 
 run_button.click(
 fn=infer,
-        inputs=[prompt, negative_prompt, seed, width, height, guidance_scale, num_inference_steps],
-        inputs=[prompt, negative_prompt, seed, width, height, guidance_scale, num_inference_steps, num_images],
+        inputs=[prompt, negative_prompt, seed, width, height, guidance_scale, num_inference_steps, num_images, sampler_choice],
 outputs=result,
 )
 
