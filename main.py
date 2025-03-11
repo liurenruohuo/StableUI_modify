@@ -4,7 +4,7 @@ import uuid
 import torch
 import numpy as np
 import gradio as gr
-from diffusers import StableDiffusionXLPipeline, EulerDiscreteScheduler
+from diffusers import StableDiffusionXLPipeline, EulerDiscreteScheduler, LMSDiscreteScheduler, PNDMScheduler  # 导入可能用到的采样器
 
 # Constants
 MAX_SEED = np.iinfo(np.int32).max
@@ -24,54 +24,48 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 os.system(f'wget -O {MODEL_PATH} "https://civitai.com/api/download/models/128078?type=Model&format=SafeTensor&size=pruned&fp=fp16"')
 
 pipe = StableDiffusionXLPipeline.from_single_file(MODEL_PATH, use_safetensors=True, torch_dtype=torch.float16).to(device)
+pipe.load_lora_weights（LORA_DIR）
+pipe.safety_checker = None
 pipe.scheduler = EulerDiscreteScheduler.from_config(pipe.scheduler.config)
 print("\033[1;32mDone!\033[0m")
 
+# 定义采样器字典，键为采样器名称，值为对应的采样器类
+samplers = {
+    "Euler Discrete": EulerDiscreteScheduler,
+    "LMS Discrete": LMSDiscreteScheduler,
+    "PNDM": PNDMScheduler
+}
 
-def infer(prompt, negative_prompt, seed, width, height, guidance_scale, num_inference_steps):
-    if seed == -1:  # -1 indicates random seed
-        seed = random.randint(0, MAX_SEED)
-    generator = torch.Generator(device=device).manual_seed(seed)
-    
-    image = pipe(
-        prompt=prompt, 
-        negative_prompt=negative_prompt,
-        guidance_scale=guidance_scale, 
-        num_inference_steps=num_inference_steps, 
-        width=width, 
-        height=height,
-        generator=generator,
-    ).images[0]
-    
-    image_filename = f"{uuid.uuid4()}.png"
-    image_path = os.path.join(SAVE_DIR, image_filename)
-    image.save(image_path)
-    
-    return image
-def infer(prompt, negative_prompt, seed, width, height, guidance_scale, num_inference_steps, num_images):
+lora_weight = 0.7
+
+def infer(prompt, negative_prompt, seed, width, height, guidance_scale, num_inference_steps, num_images, sampler_name, cross_attention_kwargs):
     images = []
     for _ in range(num_images):
         if seed == -1:  # -1 indicates random seed
             seed = random.randint(0, MAX_SEED)
         generator = torch.Generator(device=device).manual_seed(seed)
-
+    
+        # 根据用户选择的采样器名称设置采样器
+        sampler = samplers[sampler_name]
+        pipe.scheduler = sampler.from_config(pipe.scheduler.config) 
+        
         image = pipe(
-            prompt=prompt,
+            prompt=prompt, 
             negative_prompt=negative_prompt,
-            guidance_scale=guidance_scale,
-            num_inference_steps=num_inference_steps,
-            width=width,
+            guidance_scale=guidance_scale, 
+            num_inference_steps=num_inference_steps, 
+            width=width, 
             height=height,
             generator=generator,
+            cross_attention_kwargs={"scale": lora_weight}
         ).images[0]
-
+        
         image_filename = f"{uuid.uuid4()}.png"
         image_path = os.path.join(SAVE_DIR, image_filename)
         image.save(image_path)
         images.append(image)
-
-    return images
-
+    
+    return image
 
 def download_model(model_url):
     global MODEL_PATH
