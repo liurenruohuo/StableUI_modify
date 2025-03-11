@@ -35,19 +35,20 @@ samplers = {
 }
 
 lora_weight = 0.7
-
-def infer(prompt, negative_prompt, seed, width, height, guidance_scale, num_inference_steps, num_images, sampler_name, cross_attention_kwargs, generator):
+# 修改infer函数，让infer函数保存图片列表
+def infer(prompt, negative_prompt, seed, width, height, guidance_scale, num_inference_steps, num_images, sampler_name, cross_attention_kwargs):
     images = []
     for _ in range(num_images):
-        if seed == -1:  # -1 indicates random seed
-            seed = random.randint(0, MAX_SEED)
-        generator = torch.Generator(device=device).manual_seed(seed)
-    
-        # 根据用户选择的采样器名称设置采样器
+        if seed == -1:
+            current_seed = random.randint(0, MAX_SEED)
+        else:
+            current_seed = seed
+        generator = torch.Generator(device=device).manual_seed(current_seed)
+
         sampler = samplers[sampler_name]
-        pipe.scheduler = sampler.from_config(pipe.scheduler.config) 
-        
-        image = pipe(
+        pipe.scheduler = sampler.from_config(pipe.scheduler.config)
+
+        image_list = pipe(
             prompt=prompt, 
             negative_prompt=negative_prompt,
             guidance_scale=guidance_scale, 
@@ -56,14 +57,15 @@ def infer(prompt, negative_prompt, seed, width, height, guidance_scale, num_infe
             height=height,
             generator=generator,
             cross_attention_kwargs={"scale": lora_weight}
-        ).images[]
-        
-        image_filename = f"{uuid.uuid4()}.png"
-        image_path = os.path.join(SAVE_DIR, image_filename)
-        image.save(image_path)
-        images.append(image)
-    
-    return images  # 这里原代码返回单个 image 可能有误，推测应该返回 images 列表
+        ).images
+
+        for idx, img in enumerate(image_list):
+            image_filename = f"{uuid.uuid4()}_{idx}.png"
+            image_path = os.path.join(SAVE_DIR, image_filename)
+            img.save(image_path)
+            images.append(img)
+
+    return images
 
 def download_model(model_url):
     global MODEL_PATH
