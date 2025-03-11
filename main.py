@@ -36,7 +36,7 @@ samplers = {
 
 lora_weight = 0.7
 
-def infer(prompt, negative_prompt, seed, width, height, guidance_scale, num_inference_steps, num_images, sampler_name, cross_attention_kwargs):
+def infer(prompt, negative_prompt, seed, width, height, guidance_scale, num_inference_steps, num_images, sampler_name, cross_attention_kwargs, generator):
     images = []
     for _ in range(num_images):
         if seed == -1:  # -1 indicates random seed
@@ -56,7 +56,7 @@ def infer(prompt, negative_prompt, seed, width, height, guidance_scale, num_infe
             height=height,
             generator=generator,
             cross_attention_kwargs={"scale": lora_weight}
-        ).images[0]
+        ).images[]
         
         image_filename = f"{uuid.uuid4()}.png"
         image_path = os.path.join(SAVE_DIR, image_filename)
