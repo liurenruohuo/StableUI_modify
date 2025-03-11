@@ -64,7 +64,7 @@ def infer(prompt, negative_prompt, seed, width, height, guidance_scale, num_infe
         image.save(image_path)
         images.append(image)
     
-    return image
+    return images  # 这里原代码返回单个 image 可能有误，推测应该返回 images 列表
 
 def download_model(model_url):
     global MODEL_PATH
@@ -102,44 +102,41 @@ examples = [
 ]
 
 with gr.Blocks(css=css, theme='ParityError/Interstellar') as app:
-with gr.Column(elem_id="col-container"):
-gr.Markdown(f"""
-   # Stable Diffusion <a href="https://www.patreon.com/marat_ai">by marat_ai</a> 
-   <a href="https://www.youtube.com/@marat_ai">
-       <img src="https://img.shields.io/badge/YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white" alt="YouTube" style="display: inline;"/>
-   </a>
-   <a href="https://www.patreon.com/marat_ai">
-       <img src="https://img.shields.io/badge/Patreon-F96854?style=for-the-badge&logo=patreon&logoColor=white" alt="Patreon" style="display: inline;"/>
-   </a>
+    with gr.Column(elem_id="col-container"):
+        gr.Markdown(f"""
+           # Stable Diffusion <a href="https://www.patreon.com/marat_ai">by marat_ai</a> 
+           <a href="https://www.youtube.com/@marat_ai">
+               <img src="https://img.shields.io/badge/YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white" alt="YouTube" style="display: inline;"/>
+           </a>
+           <a href="https://www.patreon.com/marat_ai">
+               <img src="https://img.shields.io/badge/Patreon-F96854?style=for-the-badge&logo=patreon&logoColor=white" alt="Patreon" style="display: inline;"/>
+           </a>
 
-   Google Colab's free tier offers about 4 hours of GPU usage per day. No authorization, no data storing or tracking. Your session data will be deleted when this session closes.
-""")
+           Google Colab's free tier offers about 4 hours of GPU usage per day. No authorization, no data storing or tracking. Your session data will be deleted when this session closes.
+        """)
 
-with gr.Group():
-with gr.Row():
-prompt = gr.Text(label="Prompt", show_label=False, lines=1, max_lines=7,
-placeholder="Enter your prompt", container=False, scale=4)
-run_button = gr.Button("🚀 Run", scale=1, variant='primary')      
+        with gr.Group():
+            with gr.Row():
+                prompt = gr.Text(label="Prompt", show_label=False, lines=1, max_lines=7,
+                                 placeholder="Enter your prompt", container=False, scale=4)
+                run_button = gr.Button("🚀 Run", scale=1, variant='primary')      
 
         result = gr.Gallery(label="Result", show_label=False)
 
-with gr.Group():
-with gr.Accordion("⚙️ Settings", open=False):
-negative_prompt = gr.Text(label="Negative prompt", placeholder="Enter a negative prompt",
-lines=3, value='lowres, text, error, cropped, worst quality, low quality, jpeg artifacts, ugly, duplicate, morbid, mutilated, out of frame, extra fingers, mutated hands, poorly drawn hands, poorly drawn face, mutation, deformed, blurry, dehydrated, bad anatomy, bad proportions, extra limbs, cloned face, disfigured, gross proportions, malformed limbs, missing arms, missing legs, extra arms, extra legs, fused fingers, too many fingers, long neck, username, watermark, signature')
+        with gr.Group():
+            with gr.Accordion("⚙️ Settings", open=False):
+                negative_prompt = gr.Text(label="Negative prompt", placeholder="Enter a negative prompt",
+                                          lines=3, value='lowres, text, error, cropped, worst quality, low quality, jpeg artifacts, ugly, duplicate, morbid, mutilated, out of frame, extra fingers, mutated hands, poorly drawn hands, poorly drawn face, mutation, deformed, blurry, dehydrated, bad anatomy, bad proportions, extra limbs, cloned face, disfigured, gross proportions, malformed limbs, missing arms, missing legs, extra arms, extra legs, fused fingers, too many fingers, long neck, username, watermark, signature')
                 
-
-seed = gr.Slider(label="Seed (-1 for random)", minimum=-1, maximum=MAX_SEED, step=1, value=-1)
+                seed = gr.Slider(label="Seed (-1 for random)", minimum=-1, maximum=MAX_SEED, step=1, value=-1)
                 
-
-with gr.Row():
-width = gr.Slider(label="Width", minimum=256, maximum=MAX_IMAGE_SIZE, step=64, value=1024)
-height = gr.Slider(label="Height", minimum=256, maximum=MAX_IMAGE_SIZE, step=64, value=1024)
+                with gr.Row():
+                    width = gr.Slider(label="Width", minimum=256, maximum=MAX_IMAGE_SIZE, step=64, value=1024)
+                    height = gr.Slider(label="Height", minimum=256, maximum=MAX_IMAGE_SIZE, step=64, value=1024)
                 
-
-with gr.Row():
-guidance_scale = gr.Slider(label="Guidance scale", minimum=0.0, maximum=10.0, step=0.1, value=5.0)
-num_inference_steps = gr.Slider(label="Steps", minimum=1, maximum=50, step=1, value=20)
+                with gr.Row():
+                    guidance_scale = gr.Slider(label="Guidance scale", minimum=0.0, maximum=10.0, step=0.1, value=5.0)
+                    num_inference_steps = gr.Slider(label="Steps", minimum=1, maximum=50, step=1, value=20)
 
                 num_images = gr.Slider(label="Number of images", minimum=1, maximum=10, step=1, value=1)
 
@@ -155,14 +152,14 @@ num_inference_steps = gr.Slider(label="Steps", minimum=1, maximum=50, step=1, va
                     value="Euler Discrete"
                 )
 
-gr.Examples(examples=examples, inputs=[prompt])
+        gr.Examples(examples=examples, inputs=[prompt])
     
 
-run_button.click(
-fn=infer,
+    run_button.click(
+        fn=infer,
         inputs=[prompt, negative_prompt, seed, width, height, guidance_scale, num_inference_steps, num_images, sampler_choice],
-outputs=result,
-)
+        outputs=result,
+    )
 
     download_model_button.click(
         fn=download_model,
@@ -177,4 +174,4 @@ outputs=result,
     )
 
 if __name__ == "__main__":
-app.launch(share=True, inline=False, inbrowser=False, debug=True)
+    app.launch(share=True, inline=False, inbrowser=False, debug=True)
