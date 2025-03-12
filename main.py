@@ -38,7 +38,7 @@ samplers = {
 lora_weight = 0.7
 
 # 修改infer函数，让infer函数保存图片列表
-def infer(prompt, negative_prompt, seed, width, height, guidance_scale, num_inference_steps, num_images, sampler_choice, cross_attention_kwargs):
+def infer(prompt, negative_prompt, seed, width, height, guidance_scale, num_inference_steps, num_images, sampler_choice):
     images = []
     for _ in range(num_images):
         if seed == -1:
@@ -66,10 +66,12 @@ def infer(prompt, negative_prompt, seed, width, height, guidance_scale, num_infe
             image_path = os.path.join(SAVE_DIR, image_filename)
             img.save(image_path)
             images.append(img)
+    return images
 
-    # 生成新图片后更新相册
-    album_images = update_album()
-    return images, album_images
+# 函数：更新相册
+def update_album():
+    image_files = [os.path.join(SAVE_DIR, f) for f in os.listdir(SAVE_DIR) if f.endswith('.png')]
+    return image_files
 
 def download_model(model_url):
     global MODEL_PATH
@@ -84,13 +86,8 @@ def download_lora(lora_url):
     lora_filename = os.path.basename(lora_url)
     lora_path = os.path.join(LORA_DIR, lora_filename)
     os.system(f'wget -O {lora_path} "{lora_url}"')
-    pipe.load_lora_weights(lora_path) # 这里可以添加加载LoRA的逻辑
+    pipe.load_lora_weights(lora_path) 
     return "LoRA downloaded successfully."
-
-# 函数：更新相册
-def update_album():
-    image_files = [os.path.join(SAVE_DIR, f) for f in os.listdir(SAVE_DIR) if f.endswith('.png')]
-    return image_files
 
 # UI setup
 css = """
@@ -169,23 +166,31 @@ with gr.Blocks(css=css, theme='ParityError/Interstellar') as app:
         album_images = update_album()
         album.value = album_images
 
-    run_button.click(
-        fn=infer,
-        inputs=[prompt, negative_prompt, seed, width, height, guidance_scale, num_inference_steps, num_images, sampler_choice],
-        outputs=[result, album]
-    )
+        def update_album_on_generation(*_):
+            album_images = update_album()
+            return album_images
 
-    download_model_button.click(
-        fn=download_model,
-        inputs=[model_url],
-        outputs=gr.Textbox(label="Model download status")
-    )
+        run_button.click(
+            fn=infer,
+            inputs=[prompt, negative_prompt, seed, width, height, guidance_scale, num_inference_steps, num_images, sampler_choice],
+            outputs=[result]
+        ).then(
+            fn=update_album_on_generation,
+            inputs=[],
+            outputs=[album]
+        )
 
-    download_lora_button.click(
-        fn=download_lora,
-        inputs=[lora_url],
-        outputs=gr.Textbox(label="LoRA download status")
-    )
+        download_model_button.click(
+            fn=download_model,
+            inputs=[model_url],
+            outputs=gr.Textbox(label="Model download status")
+        )
+
+        download_lora_button.click(
+            fn=download_lora,
+            inputs=[lora_url],
+            outputs=gr.Textbox(label="LoRA download status")
+        )
 
 if __name__ == "__main__":
     app.launch(share=True, inline=False, inbrowser=False, debug=True)
