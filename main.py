@@ -31,7 +31,7 @@ print("\033[1;32mDone!\033[0m")
 samplers = {
     "Euler Discrete": EulerDiscreteScheduler,
     "LMS Discrete": LMSDiscreteScheduler,
-    "PNDM": PNDMScheduler
+    "PNDM": PNDMScheduler,
     "LCM": LCMScheduler
 }
 
