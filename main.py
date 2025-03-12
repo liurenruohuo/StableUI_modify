@@ -4,7 +4,7 @@ import uuid
 import torch
 import numpy as np
 import gradio as gr
-from diffusers import StableDiffusionXLPipeline, EulerDiscreteScheduler, LMSDiscreteScheduler, PNDMScheduler  # 导入可能用到的采样器
+from diffusers import StableDiffusionXLPipeline, EulerDiscreteScheduler, LMSDiscreteScheduler, PNDMScheduler, LCMScheduler  # 导入可能用到的采样器
 
 # Constants
 MAX_SEED = np.iinfo(np.int32).max
@@ -32,6 +32,7 @@ samplers = {
     "Euler Discrete": EulerDiscreteScheduler,
     "LMS Discrete": LMSDiscreteScheduler,
     "PNDM": PNDMScheduler
+    "LCM": LCMScheduler
 }
 
 lora_weight = 0.7
