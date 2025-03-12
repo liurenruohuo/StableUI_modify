@@ -5,6 +5,7 @@ import torch
 import numpy as np
 import gradio as gr
 from diffusers import StableDiffusionXLPipeline, EulerDiscreteScheduler, LMSDiscreteScheduler, PNDMScheduler, LCMScheduler
+import threading
 
 # Constants
 MAX_SEED = np.iinfo(np.int32).max
@@ -67,9 +68,19 @@ def infer(prompt, negative_prompt, seed, width, height, guidance_scale, num_infe
             img.save(image_path)
             images.append(img)
 
-    # 生成新图片后更新相册
+    # 异步更新相册
+    threading.Thread(target=update_album_async, args=(album,)).start()
+    return images
+
+# 异步更新相册的函数
+def update_album_async(album):
     album_images = update_album()
-    return images, album_images
+    album.value = album_images
+
+# 函数：更新相册
+def update_album():
+    image_files = [os.path.join(SAVE_DIR, f) for f in os.listdir(SAVE_DIR) if f.endswith('.png')]
+    return image_files
 
 def download_model(model_url):
     global MODEL_PATH
@@ -86,11 +97,6 @@ def download_lora(lora_url):
     os.system(f'wget -O {lora_path} "{lora_url}"')
     pipe.load_lora_weights(lora_path) # 这里可以添加加载LoRA的逻辑
     return "LoRA downloaded successfully."
-
-# 函数：更新相册
-def update_album():
-    image_files = [os.path.join(SAVE_DIR, f) for f in os.listdir(SAVE_DIR) if f.endswith('.png')]
-    return image_files
 
 # UI setup
 css = """
@@ -172,7 +178,7 @@ with gr.Blocks(css=css, theme='ParityError/Interstellar') as app:
     run_button.click(
         fn=infer,
         inputs=[prompt, negative_prompt, seed, width, height, guidance_scale, num_inference_steps, num_images, sampler_choice],
-        outputs=[result, album]
+        outputs=[result]
     )
 
     download_model_button.click(
