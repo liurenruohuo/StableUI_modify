@@ -166,7 +166,7 @@ with gr.Blocks(css=css, theme='ParityError/Interstellar') as app:
         album = gr.Gallery(label="All Generated Images", show_label=False)
 
         # 应用启动时加载相册
-        album.load(update_album, inputs=[], outputs=album)
+        album.value = update_album()
     
 
     run_button.click(
