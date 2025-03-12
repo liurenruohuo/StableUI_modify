@@ -4,7 +4,7 @@ import uuid
 import torch
 import numpy as np
 import gradio as gr
-from diffusers import StableDiffusionXLPipeline, EulerDiscreteScheduler, LMSDiscreteScheduler, PNDMScheduler, LCMScheduler  # 导入可能用到的采样器
+from diffusers import StableDiffusionXLPipeline, EulerDiscreteScheduler, LMSDiscreteScheduler, PNDMScheduler, LCMScheduler
 
 # Constants
 MAX_SEED = np.iinfo(np.int32).max
@@ -36,6 +36,7 @@ samplers = {
 }
 
 lora_weight = 0.7
+
 # 修改infer函数，让infer函数保存图片列表
 def infer(prompt, negative_prompt, seed, width, height, guidance_scale, num_inference_steps, num_images, sampler_choice, cross_attention_kwargs):
     images = []
@@ -68,8 +69,7 @@ def infer(prompt, negative_prompt, seed, width, height, guidance_scale, num_infe
 
     # 生成新图片后更新相册
     album_images = update_album()
-    album.update(value=album_images)
-    return images
+    return images, album_images
 
 def download_model(model_url):
     global MODEL_PATH
