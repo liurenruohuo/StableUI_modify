@@ -75,7 +75,12 @@ def infer(prompt, negative_prompt, seed, width, height, guidance_scale, num_infe
 # 异步更新相册的函数
 def update_album_async(album):
     album_images = update_album()
-    album.value = album_images
+    # 确保相册组件能正确更新
+    def update_album_ui():
+        album.value = album_images
+        return album
+    # 模拟Gradio的事件更新机制
+    gr.on(None, None, update_album_ui, outputs=album)
 
 # 函数：更新相册
 def update_album():
@@ -95,7 +100,7 @@ def download_lora(lora_url):
     lora_filename = os.path.basename(lora_url)
     lora_path = os.path.join(LORA_DIR, lora_filename)
     os.system(f'wget -O {lora_path} "{lora_url}"')
-    pipe.load_lora_weights(lora_path) # 这里可以添加加载LoRA的逻辑
+    pipe.load_lora_weights(lora_path) 
     return "LoRA downloaded successfully."
 
 # UI setup
@@ -169,7 +174,7 @@ with gr.Blocks(css=css, theme='ParityError/Interstellar') as app:
         gr.Examples(examples=examples, inputs=[prompt])
 
         # 新增相册模块
-        album = gr.Gallery(label="All Generated Images", show_label=False, interactive=False)  # 设置为不可交互，避免上传功能
+        album = gr.Gallery(label="All Generated Images", show_label=False, interactive=False)
 
         # 应用启动时加载相册
         album_images = update_album()
