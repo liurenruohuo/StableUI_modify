@@ -67,7 +67,8 @@ def infer(prompt, negative_prompt, seed, width, height, guidance_scale, num_infe
             images.append(img)
 
     # 生成新图片后更新相册
-    update_album() 
+    album_images = update_album()
+    album.update(value=album_images)
     return images
 
 def download_model(model_url):
@@ -78,7 +79,6 @@ def download_model(model_url):
     pipe = StableDiffusionXLPipeline.from_single_file(new_model_path, use_safetensors=True, torch_dtype=torch.float16).to(device)
     pipe.scheduler = EulerDiscreteScheduler.from_config(pipe.scheduler.config)
     return "Model downloaded and loaded successfully."
-
 
 def download_lora(lora_url):
     lora_filename = os.path.basename(lora_url)
@@ -166,13 +166,13 @@ with gr.Blocks(css=css, theme='ParityError/Interstellar') as app:
         album = gr.Gallery(label="All Generated Images", show_label=False)
 
         # 应用启动时加载相册
-        album.value = update_album()
-    
+        album_images = update_album()
+        album.value = album_images
 
     run_button.click(
         fn=infer,
         inputs=[prompt, negative_prompt, seed, width, height, guidance_scale, num_inference_steps, num_images, sampler_choice],
-        outputs=result,
+        outputs=[result, album]
     )
 
     download_model_button.click(
