@@ -5,7 +5,6 @@ import torch
 import numpy as np
 import gradio as gr
 from diffusers import StableDiffusionXLPipeline, EulerDiscreteScheduler, LMSDiscreteScheduler, PNDMScheduler, LCMScheduler
-import threading
 
 # Constants
 MAX_SEED = np.iinfo(np.int32).max
@@ -52,11 +51,11 @@ def infer(prompt, negative_prompt, seed, width, height, guidance_scale, num_infe
         pipe.scheduler = sampler.from_config(pipe.scheduler.config)
 
         image_list = pipe(
-            prompt=prompt,
+            prompt=prompt, 
             negative_prompt=negative_prompt,
-            guidance_scale=guidance_scale,
-            num_inference_steps=num_inference_steps,
-            width=width,
+            guidance_scale=guidance_scale, 
+            num_inference_steps=num_inference_steps, 
+            width=width, 
             height=height,
             generator=generator,
             cross_attention_kwargs={"scale": lora_weight}
@@ -68,19 +67,9 @@ def infer(prompt, negative_prompt, seed, width, height, guidance_scale, num_infe
             img.save(image_path)
             images.append(img)
 
-    # 异步更新相册
-    threading.Thread(target=update_album_async, args=(album,)).start()
-    return images
-
-# 异步更新相册的函数
-def update_album_async(album):
+    # 生成新图片后更新相册
     album_images = update_album()
-    album.value = album_images
-
-# 函数：更新相册
-def update_album():
-    image_files = [os.path.join(SAVE_DIR, f) for f in os.listdir(SAVE_DIR) if f.endswith('.png')]
-    return image_files
+    return images, album_images
 
 def download_model(model_url):
     global MODEL_PATH
@@ -95,8 +84,13 @@ def download_lora(lora_url):
     lora_filename = os.path.basename(lora_url)
     lora_path = os.path.join(LORA_DIR, lora_filename)
     os.system(f'wget -O {lora_path} "{lora_url}"')
-    pipe.load_lora_weights(lora_path)
+    pipe.load_lora_weights(lora_path) # 这里可以添加加载LoRA的逻辑
     return "LoRA downloaded successfully."
+
+# 函数：更新相册
+def update_album():
+    image_files = [os.path.join(SAVE_DIR, f) for f in os.listdir(SAVE_DIR) if f.endswith('.png')]
+    return image_files
 
 # UI setup
 css = """
@@ -110,9 +104,9 @@ footer {
 """
 
 examples = [
-    "a cat",
-    "a cat in the hat",
-    "a cat in the cowboy hat",
+"a cat",
+"a cat in the hat",
+"a cat in the cowboy hat",
 ]
 
 with gr.Blocks(css=css, theme='ParityError/Interstellar') as app:
@@ -133,7 +127,7 @@ with gr.Blocks(css=css, theme='ParityError/Interstellar') as app:
             with gr.Row():
                 prompt = gr.Text(label="Prompt", show_label=False, lines=1, max_lines=7,
                                  placeholder="Enter your prompt", container=False, scale=4)
-                run_button = gr.Button("🚀 Run", scale=1, variant='primary')
+                run_button = gr.Button("🚀 Run", scale=1, variant='primary')      
 
         result = gr.Gallery(label="Result", show_label=False)
 
@@ -141,13 +135,13 @@ with gr.Blocks(css=css, theme='ParityError/Interstellar') as app:
             with gr.Accordion("⚙️ Settings", open=False):
                 negative_prompt = gr.Text(label="Negative prompt", placeholder="Enter a negative prompt",
                                           lines=3, value='lowres, text, error, cropped, worst quality, low quality, jpeg artifacts, ugly, duplicate, morbid, mutilated, out of frame, extra fingers, mutated hands, poorly drawn hands, poorly drawn face, mutation, deformed, blurry, dehydrated, bad anatomy, bad proportions, extra limbs, cloned face, disfigured, gross proportions, malformed limbs, missing arms, missing legs, extra arms, extra legs, fused fingers, too many fingers, long neck, username, watermark, signature')
-
+                
                 seed = gr.Slider(label="Seed (-1 for random)", minimum=-1, maximum=MAX_SEED, step=1, value=-1)
-
+                
                 with gr.Row():
                     width = gr.Slider(label="Width", minimum=256, maximum=MAX_IMAGE_SIZE, step=64, value=1024)
                     height = gr.Slider(label="Height", minimum=256, maximum=MAX_IMAGE_SIZE, step=64, value=1024)
-
+                
                 with gr.Row():
                     guidance_scale = gr.Slider(label="Guidance scale", minimum=0.0, maximum=10.0, step=0.1, value=5.0)
                     num_inference_steps = gr.Slider(label="Steps", minimum=1, maximum=50, step=1, value=20)
@@ -169,7 +163,7 @@ with gr.Blocks(css=css, theme='ParityError/Interstellar') as app:
         gr.Examples(examples=examples, inputs=[prompt])
 
         # 新增相册模块
-        album = gr.Gallery(label="All Generated Images", show_label=False, interactive=False)
+        album = gr.Gallery(label="All Generated Images", show_label=False)
 
         # 应用启动时加载相册
         album_images = update_album()
@@ -178,7 +172,7 @@ with gr.Blocks(css=css, theme='ParityError/Interstellar') as app:
     run_button.click(
         fn=infer,
         inputs=[prompt, negative_prompt, seed, width, height, guidance_scale, num_inference_steps, num_images, sampler_choice],
-        outputs=[result]
+        outputs=[result, album]
     )
 
     download_model_button.click(
