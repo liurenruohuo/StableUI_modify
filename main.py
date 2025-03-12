@@ -36,7 +36,7 @@ samplers = {
 
 lora_weight = 0.7
 # 修改infer函数，让infer函数保存图片列表
-def infer(prompt, negative_prompt, seed, width, height, guidance_scale, num_inference_steps, num_images, sampler_name, cross_attention_kwargs):
+def infer(prompt, negative_prompt, seed, width, height, guidance_scale, num_inference_steps, num_images, sampler_choice, cross_attention_kwargs):
     images = []
     for _ in range(num_images):
         if seed == -1:
@@ -45,7 +45,7 @@ def infer(prompt, negative_prompt, seed, width, height, guidance_scale, num_infe
             current_seed = seed
         generator = torch.Generator(device=device).manual_seed(current_seed)
 
-        sampler = samplers[sampler_name]
+        sampler = samplers[sampler_choice]
         pipe.scheduler = sampler.from_config(pipe.scheduler.config)
 
         image_list = pipe(
