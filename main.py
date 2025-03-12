@@ -169,7 +169,7 @@ with gr.Blocks(css=css, theme='ParityError/Interstellar') as app:
         gr.Examples(examples=examples, inputs=[prompt])
 
         # 新增相册模块
-        album = gr.Gallery(label="All Generated Images", show_label=False)
+        album = gr.Gallery(label="All Generated Images", show_label=False, interactive=False)  # 设置为不可交互，避免上传功能
 
         # 应用启动时加载相册
         album_images = update_album()
