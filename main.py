@@ -81,10 +81,10 @@ def download_model(model_url):
     return "Model downloaded and loaded successfully."
 
 def download_lora(lora_url):
-    # lora_filename = os.path.basename(lora_url)
-    # lora_path = os.path.join(LORA_DIR, lora_filename)
-    os.system(f'wget -O {LORA_DIR} "{lora_url}"')
-    pipe.load_lora_weights(LORA_DIR) # 这里可以添加加载LoRA的逻辑
+    lora_filename = os.path.basename(lora_url)
+    lora_path = os.path.join(LORA_DIR, lora_filename)
+    os.system(f'wget -O {lora_path} "{lora_url}"')
+    pipe.load_lora_weights(lora_path) # 这里可以添加加载LoRA的逻辑
     return "LoRA downloaded successfully."
 
 # 函数：更新相册
