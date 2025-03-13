@@ -80,13 +80,22 @@ def download_model(model_url):
     pipe.scheduler = EulerDiscreteScheduler.from_config(pipe.scheduler.config)
     return "Model downloaded and loaded successfully."
 
-def download_lora(lora_url):
-    lora_filename = os.path.basename(lora_url)
-    lora_path = os.path.join(LORA_DIR, lora_filename)
-    os.system(f'wget -O {lora_path} "{lora_url}"')
-    pipe.load_lora_weights(lora_path) # 这里可以添加加载LoRA的逻辑
-    return "LoRA downloaded successfully."
 
+#def download_lora(lora_url):
+    #lora_filename = os.path.basename(lora_url)
+    #lora_path = os.path.join(LORA_DIR, lora_filename)
+    #os.system(f'wget -O {lora_path} "{lora_url}"')
+    #pipe.load_lora_weights(lora_path) # 这里可以添加加载LoRA的逻辑
+    #return "LoRA downloaded successfully."
+
+def download_lora(lora_url):
+    LORA_PATH = "/content/StableUI_base/lora/LORA.safetensors"
+    lora_filename = os.path.basename(lora_url)
+    #lora_path = os.path.join(LORA_DIR, lora_filename)
+    os.system(f'wget -O {LORA_PATH} "{lora_url}"')
+    pipe.load_lora_weights(LORA_PATH) # 这里可以添加加载LoRA的逻辑
+    return "LoRA={lora_filename} downloaded successfully."
+    
 # 函数：更新相册
 def update_album():
     image_files = [os.path.join(SAVE_DIR, f) for f in os.listdir(SAVE_DIR) if f.endswith('.png')]
