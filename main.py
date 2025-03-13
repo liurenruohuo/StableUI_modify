@@ -73,10 +73,10 @@ def infer(prompt, negative_prompt, seed, width, height, guidance_scale, num_infe
 
 def download_model(model_url):
     global MODEL_PATH
-    new_model_path = '/content/StableUI_base/new_model.safetensors'
-    os.system(f'wget -O {new_model_path} "{model_url}"')
+    //MODEL_PATH = '/content/StableUI_base/new_model.safetensors'
+    os.system(f'wget -O {MODEL_PATH} "{model_url}"')
     global pipe
-    pipe = StableDiffusionXLPipeline.from_single_file(new_model_path, use_safetensors=True, torch_dtype=torch.float16).to(device)
+    pipe = StableDiffusionXLPipeline.from_single_file(MODEL_PATH, use_safetensors=True, torch_dtype=torch.float16).to(device)
     pipe.scheduler = EulerDiscreteScheduler.from_config(pipe.scheduler.config)
     return "Model downloaded and loaded successfully."
 
